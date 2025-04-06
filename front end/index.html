@@ -52,7 +52,7 @@
     <p class="description">
       Upload a file with your company's financing operations, and the CPA Assistant will automatically generate the correct journal entries using AI-powered analysis.
     </p>
-    <form action="http://127.0.0.1:5000/process_financing_file" method="POST" enctype="multipart/form-data">
+    <form action="/process_financing_file" method="POST" enctype="multipart/form-data">
       <input type="file" name="financing_file" accept=".txt,.csv,.pdf" required />
       <button type="submit">Upload & Generate Journal Entries</button>
     </form>

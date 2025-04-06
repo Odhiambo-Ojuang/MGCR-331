@@ -4,7 +4,7 @@ from flask_cors import CORS
 import groq
 
 app = Flask(__name__, template_folder='/frontend')
-#CORS(app, origins=["http://127.0.0.1:5500"])
+CORS(app, origins=["http://127.0.0.1:5500"])
 
 groq.api_key = "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"  # Set your Groq API key
 
