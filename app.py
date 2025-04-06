@@ -1,14 +1,12 @@
 from flask import Flask, render_template, request
-import openai
-import fitz  # PyMuPDF for PDFs
+import fitz # PyMuPDF for PDFs
 from flask_cors import CORS
-  # This will allow cross-origin requests to your Flask app
+import groq
 
+app = Flask(__name__, template_folder='/frontend')
+#CORS(app, origins=["http://127.0.0.1:5500"])
 
-app = Flask(__name__, template_folder='../frontend')
-CORS(app, origins=["http://127.0.0.1:5500"])
-
-openai.api_key = "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"  # Set your OpenAI API key
+groq.api_key = "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"  # Set your Groq API key
 
 # === Extract PDF text ===
 def extract_text_from_pdf(file):
@@ -29,8 +27,8 @@ def generate_journal_entries_and_ledger(text):
         f"Input:\n{text}\n\nJournal Entries and Ledger Balances:"
     )
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
+    response = groq.ChatCompletion.create(
+        model="llama3-8b-8192",  # Choose a suitable Groq model
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3
     )

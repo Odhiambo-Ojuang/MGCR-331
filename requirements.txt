@@ -356,3 +356,4 @@ zict                          2.0.0
 zipp                          3.7.0
 zope.interface                5.4.0
 flask-cors                    5.0.1
+groq                          0.22.0
