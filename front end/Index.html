@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CPA Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 2rem 3rem;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 400px;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+
+    p {
+      margin-bottom: 2rem;
+      color: #555;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #2c3e50;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #1a242f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CPA Assistant</h1>
+    <p>Select the financial statement and your industry:</p>
+    
+    <form action="/forecast" method="POST">
+      <!-- Financial Statement Type -->
+      <select name="statementType" required>
+        <option value="">-- Choose Statement --</option>
+        <option value="income">Income Statement</option>
+        <option value="balance">Balance Sheet</option>
+        <option value="cashflow">Cash Flow Statement</option>
+        <option value="retainedEarnings">Retained Earnings Statement</option>
+      </select>
+
+      <!-- Industry Selection -->
+      <select name="industry" required>
+        <option value="">-- Select Industry --</option>
+        <option value="technology">Technology</option>
+        <option value="healthcare">Healthcare</option>
+        <option value="finance">Finance</option>
+        <option value="retail">Retail</option>
+        <option value="manufacturing">Manufacturing</option>
+        <option value="energy">Energy</option>
+        <option value="realEstate">Real Estate</option>
+        <option value="transportation">Transportation</option>
+      </select>
+      
+      <button type="submit">Select</button>
+    </form>
+  </div>
+</body>
+</html>
