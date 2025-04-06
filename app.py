@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request
-import fitz 
+import fitz
 from flask_cors import CORS
-import groq
+from groq import Groq
 
-app = Flask(__name__, template_folder='/frontend')
+app = Flask(__name__, template_folder='frontend')  # Correct template folder path
 CORS(app, origins=["http://127.0.0.1:5500"])
 
-groq.api_key = "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"  # Set your Groq API key
+client = Groq(api_key = "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")  # Set your Groq API key
 
 # === Extract PDF text ===
 def extract_text_from_pdf(file):
@@ -27,13 +27,17 @@ def generate_journal_entries_and_ledger(text):
         f"Input:\n{text}\n\nJournal Entries and Ledger Balances:"
     )
 
-    response = groq.ChatCompletion.create(
-        model="llama3-8b-8192",  # Choose a suitable Groq model
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3
-    )
-
-    return response['choices'][0]['message']['content']
+    try:
+        # Adjust Groq API call here
+        response = groq.completions.create(
+            model="llama3-8b-8192", 
+            prompt=prompt,
+            temperature=0.3
+        )
+        return response['choices'][0]['message']['content']  # Correct access pattern
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return "Failed to generate journal entries."
 
 # === Routes ===
 @app.route("/")
