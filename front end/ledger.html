@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledger</title>
+</head>
+<body>
+    <h1>Ledger</h1>
+
+    <h2>Ledger</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Account</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th>Ending Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in ledger.split('\n') %}
+                <tr>
+                    <td>{{ entry.split(':')[0].strip() }}</td>
+                    <td>{{ entry.split(':')[1].strip() }}</td>
+                    <td>{{ entry.split(':')[2].strip() }}</td>
+                    <td>{{ entry.split(':')[3].strip() }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href="{{ url_for('index') }}">Back to Journal Entries</a></p>
+</body>
+</html>

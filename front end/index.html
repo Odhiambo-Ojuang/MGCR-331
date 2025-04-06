@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CPA Assistant - Upload Financing Operations</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f7f7f7;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    p.description {
+      text-align: center;
+      color: #555;
+      margin-bottom: 30px;
+    }
+    input[type="file"] {
+      display: block;
+      margin: 20px auto;
+    }
+    button {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CPA Assistant</h1>
+    <p class="description">
+      Upload a file with your company's financing operations, and the CPA Assistant will automatically generate the correct journal entries using AI-powered analysis.
+    </p>
+    <form action="/process_financing_file" method="POST" enctype="multipart/form-data">
+      <input type="file" name="financing_file" accept=".txt,.csv,.pdf" required />
+      <button type="submit">Upload & Generate Journal Entries</button>
+    </form>
+  </div>
+</body>
+</html>
