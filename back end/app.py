@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request
 import openai
 import fitz  # PyMuPDF for PDFs
+from flask_cors import CORS
+  # This will allow cross-origin requests to your Flask app
 
-app = Flask(__name__)
 
-openai.api_key = "your-openai-api-key"  # Set your OpenAI API key
+app = Flask(__name__, template_folder='../frontend')
+CORS(app, origins=["http://127.0.0.1:5500"])
+
+openai.api_key = "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"  # Set your OpenAI API key
 
 # === Extract PDF text ===
 def extract_text_from_pdf(file):
