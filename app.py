@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify
-import fitz
 from flask_cors import CORS
 from groq import Groq
 import re
@@ -9,13 +8,6 @@ CORS(app, origins=["http://127.0.0.1:5500"])
 
 client = Groq(api_key="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")  # Replace with your key
 
-# === Extract PDF text ===
-def extract_text_from_pdf(file):
-    doc = fitz.open(stream=file.read(), filetype="pdf")
-    text = ""
-    for page in doc:
-        text += page.get_text()
-    return text
 
 # === Groq API call ===
 global_message = None
@@ -73,9 +65,7 @@ def index():
 def process_financing_file():
     file = request.files["financing_file"]
 
-    if file.filename.endswith(".pdf"):
-        text = extract_text_from_pdf(file)
-    elif file.filename.endswith(".txt") or file.filename.endswith(".csv"):
+    if file.filename.endswith(".txt") or file.filename.endswith(".csv"):
         text = file.read().decode("utf-8")
     else:
         return "Unsupported file type", 400
@@ -99,9 +89,7 @@ def update_balance_sheet():
         return "Balance sheet file is required", 400
 
     # Read balance sheet text
-    if balance_sheet_file.filename.endswith('.pdf'):
-        balance_sheet_text = extract_text_from_pdf(balance_sheet_file)
-    elif balance_sheet_file.filename.endswith('.txt') or balance_sheet_file.filename.endswith('.csv'):
+    if balance_sheet_file.filename.endswith('.txt') or balance_sheet_file.filename.endswith('.csv'):
         balance_sheet_text = balance_sheet_file.read().decode("utf-8")
     else:
         return "Invalid file format for balance sheet", 400
