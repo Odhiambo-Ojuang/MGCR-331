@@ -14,19 +14,42 @@
       padding: 40px;
     }
 
-    h1, h2 {
-      text-align: center;
+    h1 {
       color: #2c3e50;
     }
 
-    .entries-container {
-      background-color: #fff;
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background-color: #ddd;
+      margin: 0 5px;
+      border-radius: 8px 8px 0 0;
+      transition: background-color 0.3s;
+    }
+
+    .tab.active {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .content {
+      display: none;
+      background-color: white;
       padding: 20px;
-      border-radius: 12px;
+      border-radius: 0 0 12px 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       width: 90%;
       max-width: 800px;
-      overflow-x: auto;
+    }
+
+    .content.active {
+      display: block;
     }
 
     pre {
@@ -38,11 +61,34 @@
   </style>
 </head>
 <body>
-  <h1>Generated Journal Entries</h1>
-  <h2>Journal Entries</h2>
+  <h1>CPA Assistant Results</h1>
 
-  <div class="entries-container">
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('journal')">Journal Entries</div>
+    <div class="tab" onclick="showTab('ledger')">Ledger by Account</div>
+  </div>
+
+  <div id="journal" class="content active">
+    <h2>Journal Entries</h2>
     <pre>{{ entries }}</pre>
   </div>
+
+  <div id="ledger" class="content">
+    <h2>Ledger Balances</h2>
+    <pre>{{ ledger }}</pre>
+  </div>
+
+  <script>
+    function showTab(id) {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.content');
+
+      tabs.forEach(tab => tab.classList.remove('active'));
+      contents.forEach(content => content.classList.remove('active'));
+
+      document.querySelector(`.tab[onclick*="${id}"]`).classList.add('active');
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
 </body>
 </html>
