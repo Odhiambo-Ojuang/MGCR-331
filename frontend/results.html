@@ -78,6 +78,17 @@
     <pre>{{ ledger }}</pre>
   </div>
 
+  <div class="form-container">
+    <h2>Update Balance Sheet</h2>
+    <form action="http://127.0.0.1:5000/update_balance_sheet" method="POST" enctype="multipart/form-data">
+      <label for="balance_sheet_file">Upload Previous Fiscal Year Balance Sheet (CSV, TXT, or PDF)</label>
+      <input type="file" id="balance_sheet_file" name="balance_sheet_file" accept=".csv, .txt, .pdf" required />
+
+      <button type="submit">Update Balance Sheet</button>
+    </form>
+  </div>
+
+
   <script>
     function showTab(id) {
       const tabs = document.querySelectorAll('.tab');
