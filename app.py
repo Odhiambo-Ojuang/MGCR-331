@@ -18,23 +18,25 @@ def extract_text_from_pdf(file):
 
 # === Generate journal entries using AI ===
 def generate_journal_entries_and_ledger(text):
-    prompt = (
-        "You are a CPA assistant. The user has provided a list of company financing activities, "
-        "each in the format 'Date - Description of operation'.\n\n"
-        "Generate formal accounting journal entries for each line, including debit and credit lines, "
-        "with proper indentation. Additionally, for each journal entry, track the ending balance for each "
-        "account involved in the transaction, and calculate the running balances for the entire year.\n\n"
-        f"Input:\n{text}\n\nJournal Entries and Ledger Balances:"
-    )
-
+  
     try:
         # Adjust Groq API call here
-        response = groq.completions.create(
-            model="llama3-8b-8192", 
-            prompt=prompt,
-            temperature=0.3
-        )
-        return response['choices'][0]['message']['content']  # Correct access pattern
+        response = client.chat.completions.create(
+    model="llama3-8b-8192",
+    messages=[
+        {"role": "system", "content": "You are a helpful CPA assistant."},
+        {"role": "user", "content": (
+            "The user has provided a list of company financing activities, "
+            "each in the format 'Date - Description of operation'.\n\n"
+            "Generate formal accounting journal entries for each line, including debit and credit lines, "
+            "with proper indentation. Additionally, for each journal entry, track the ending balance for each "
+            "account involved in the transaction, and calculate the running balances for the entire year.\n\n"
+            f"Input:\n{text}\n\nJournal Entries and Ledger Balances:"
+        )}
+    ],
+    temperature=0.3
+)
+        return response.choices[0].message.content  # Correct access pattern
     except Exception as e:
         print(f"An error occurred: {e}")
         return "Failed to generate journal entries."
