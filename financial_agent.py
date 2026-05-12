@@ -71,6 +71,12 @@ def _normal_balance(account_type: str) -> str:
     return "debit" if account_type in DEBIT_NORMAL_TYPES else "credit"
 
 
+def _money(amount: float) -> str:
+    """Render a dollar amount as e.g. '$16,500.00' or '-$5,000.00'."""
+    sign = "-" if amount < 0 else ""
+    return f"{sign}${abs(amount):,.2f}"
+
+
 class FinancialAgent:
     """An LLM agent that uses tools to keep its math honest."""
 
@@ -160,7 +166,9 @@ class FinancialAgent:
             r"Non-Current Assets|Current Liabilities|Long-term Liabilities)\s*$",
             re.IGNORECASE,
         )
-        line_pat = re.compile(r"^\s*[-•]?\s*(.+?)\s+\$?([\d,]+(?:\.\d+)?)\s*$")
+        # Require a $ before the amount so header lines like
+        # "As of December 31, 2024" aren't misread as an account row.
+        line_pat = re.compile(r"^\s*(?:[-•]\s+)?(.+?)\s+\$\s*([\d,]+(?:\.\d+)?)\s*$")
 
         for raw in balance_sheet_text.splitlines():
             line = raw.rstrip()
@@ -407,64 +415,91 @@ class FinancialAgent:
         return "Agent reached the maximum tool-use iterations without producing a final answer."
 
     # ---------------------------------------------------------------
+    # Deterministic renderers
+    # ---------------------------------------------------------------
+    #
+    # We never let the LLM compose the final numeric output. The model is
+    # responsible for choosing the right accounts (a reasoning task); Python
+    # is responsible for rendering every dollar value the user sees (a math
+    # task). This eliminates "tool returned 16,500 but the model wrote 60,000"
+    # transcription errors.
+
+    def _render_journal_and_ledger(self) -> str:
+        lines: list[str] = ["Journal Entries:"]
+        for i, e in enumerate(self.journal_entries, start=1):
+            lines.append(f"{i}. {e['date']} — {e['description']}")
+            lines.append(f"   Debit:  {e['debit_account']} {_money(e['amount'])}")
+            lines.append(f"   Credit: {e['credit_account']} {_money(e['amount'])}")
+        lines.append("")
+        lines.append("Ledger Balances:")
+        for row in self._tool_compute_ledger_balances()["ledger"]:
+            lines.append(
+                f"{row['account_name']} (#{row['account_number']}): "
+                f"{_money(row['ending_balance'])}"
+            )
+        return "\n".join(lines)
+
+    def _render_balance_sheet_update(self, balance_sheet_text: str) -> str:
+        result = self._tool_apply_ledger_to_balance_sheet(balance_sheet_text)
+        lines: list[str] = ["Updated Balance Sheet", "=" * 20]
+        for acct in result["updated_balance_sheet"]:
+            lines.append(f"{acct['name']}: {_money(acct['amount'])}")
+        if result["updates"]:
+            lines.append("")
+            lines.append("Changes Applied:")
+            for u in result["updates"]:
+                delta = u["change"]
+                delta_str = f"+{_money(delta)}" if delta >= 0 else _money(delta)
+                lines.append(
+                    f"  {u['account']}: {_money(u['previous_amount'])} -> "
+                    f"{_money(u['new_amount'])}  ({u['action']}, {delta_str})"
+                )
+        return "\n".join(lines)
+
+    # ---------------------------------------------------------------
     # Public workflows
     # ---------------------------------------------------------------
 
     def process_financing_operations(self, operations_text: str) -> str:
         system_prompt = (
-            "You are a CPA agent that produces accurate journal entries and ledger "
-            "balances for company financing operations.\n\n"
-            "You MUST use tools — never compute balances yourself. The tools handle "
-            "arithmetic deterministically; your job is to interpret each operation and "
-            "choose the correct debit and credit accounts.\n\n"
+            "You are a CPA agent that records financing operations as journal "
+            "entries using tools. You MUST NOT compute numbers yourself — the "
+            "system will format the ledger and journal entries deterministically "
+            "from your tool calls.\n\n"
             "Workflow:\n"
-            "1. Parse the operations text. For each operation, determine the date, a "
-            "concise description, the amount, and the correct debit/credit accounts "
-            "using standard double-entry accounting rules.\n"
-            "2. Call `record_journal_entry` exactly once per operation.\n"
-            "3. When every operation has been recorded, call `compute_ledger_balances` "
-            "to obtain the ending ledger.\n"
-            "4. Send a FINAL assistant message (no more tool calls) formatted EXACTLY "
-            "like this:\n\n"
-            "Journal Entries:\n"
-            "1. <Date> — <Description>\n"
-            "   Debit:  <Account> $<amount>\n"
-            "   Credit: <Account> $<amount>\n"
-            "2. ...\n\n"
-            "Ledger Balances:\n"
-            "<Account Name> (#<Number>): $<ending balance>\n"
-            "...\n\n"
+            "1. Parse the operations text.\n"
+            "2. For each operation, call `record_journal_entry` exactly once with "
+            "the correct debit and credit accounts using standard double-entry "
+            "rules.\n"
+            "3. When every operation has been recorded, reply with a short "
+            "confirmation message and NO further tool calls. Do not list "
+            "balances yourself — Python will render them.\n\n"
             "Guidance:\n"
-            "- For dividends paid, debit Retained Earnings (not a Dividends account) "
-            "so the balance sheet update reduces equity correctly.\n"
-            "- Prefer these canonical account names so the tools can match them to "
-            "the balance sheet:\n"
+            "- For dividends paid, debit Retained Earnings (not a Dividends "
+            "account) so the balance sheet update reduces equity correctly.\n"
+            "- Prefer these canonical account names so the tools can match them "
+            "to the balance sheet:\n"
             f"{CHART_OF_ACCOUNTS_DESC}\n"
-            "- If a transaction needs an account not listed, pick a sensible standard "
-            "name and reuse it consistently."
+            "- If a transaction needs an account not listed, pick a sensible "
+            "standard name and reuse it consistently."
         )
         user_message = f"Financing operations to process:\n\n{operations_text}"
-        return self._run(system_prompt, user_message)
+        # Drive the agent loop purely for its side effect on self.journal_entries.
+        self._run(system_prompt, user_message)
+        if not self.journal_entries:
+            return (
+                "The agent did not record any journal entries. The operations "
+                "text may have been empty or unparseable."
+            )
+        return self._render_journal_and_ledger()
 
     def process_balance_sheet_update(self, balance_sheet_text: str) -> str:
         if not self.journal_entries:
             return (
-                "No journal entries have been recorded yet. Process the financing "
-                "operations file first."
+                "No journal entries have been recorded yet. Process the "
+                "financing operations file first."
             )
-        system_prompt = (
-            "You are a CPA agent that updates balance sheets using a tool.\n\n"
-            "You MUST call `apply_ledger_to_balance_sheet` exactly once with the "
-            "provided balance sheet text. Never do the arithmetic yourself.\n\n"
-            "After the tool returns, send a FINAL assistant message (no more tool "
-            "calls) formatted as:\n\n"
-            "Updated Balance Sheet\n"
-            "====================\n"
-            "<Account Name>: $<amount>\n"
-            "<Account Name>: $<amount>\n"
-            "...\n\n"
-            "Use the exact numbers from the tool result. Group related accounts on "
-            "consecutive lines when reasonable, but do not change the values."
-        )
-        user_message = f"Previous balance sheet to update:\n\n{balance_sheet_text}"
-        return self._run(system_prompt, user_message)
+        # The balance-sheet math is fully deterministic given the recorded
+        # journal entries, so we render it directly without another LLM round
+        # trip. This guarantees the displayed numbers match the tool output.
+        return self._render_balance_sheet_update(balance_sheet_text)
